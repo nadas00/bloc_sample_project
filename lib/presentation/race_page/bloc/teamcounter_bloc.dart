@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:bloc/bloc.dart';
 import '../../../data/utils/enums/counter_status_enum.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,15 +8,6 @@ part 'teamcounter_event.dart';
 part 'teamcounter_state.dart';
 
 class TeamCounterBloc extends Bloc<TeamcounterEvent, TeamCounterState> {
-  @override
-  Future<void> close() {
-    _incrementControllerEvenetStreamSubscription.cancel();
-    _repository.dispose();
-    return super.close();
-  }
-
-  late StreamSubscription<TeamcounterEvent> _incrementControllerEvenetStreamSubscription;
-
   final TeamCounterRepository _repository;
 
   TeamCounterBloc({required TeamCounterRepository repository})
@@ -27,13 +16,18 @@ class TeamCounterBloc extends Bloc<TeamcounterEvent, TeamCounterState> {
     on<IncrementScoreEvent>(_incrementScore);
     on<GameFinishEvent>(_finishGame);
     on<RestartGameEvent>(_restartGame);
-    _incrementControllerEvenetStreamSubscription = _repository.incrementStreamStatus.listen((TeamcounterEvent event) {
-      add(event);
-    });
   }
 
   void _incrementScore(IncrementScoreEvent event, Emitter<TeamCounterState> emit) {
-    emit(event.isFirstPlayer ? FirstPlayerIncrementScoreState(event.counterStatus) : SecondPlayerIncrementScoreState(event.counterStatus));
+    CounterStatus randomScore = _repository.pickRandomIncrement();
+    GameState gameState = _repository.incrementCounter(isFirstPlayer: event.isFirstPlayer, counterStatus: randomScore);
+    if (gameState == GameState.none) {
+      return;
+    }
+    emit(event.isFirstPlayer ? FirstPlayerIncrementScoreState(randomScore) : SecondPlayerIncrementScoreState(randomScore));
+    if (gameState == GameState.finish) {
+      emit(TeamCounterFinishState());
+    }
   }
 
   void _finishGame(GameFinishEvent event, Emitter<TeamCounterState> emit) {
@@ -41,6 +35,7 @@ class TeamCounterBloc extends Bloc<TeamcounterEvent, TeamCounterState> {
   }
 
   void _restartGame(RestartGameEvent event, Emitter<TeamCounterState> emit) {
+    _repository.restart();
     emit(TeamCounterInitialState());
   }
 }

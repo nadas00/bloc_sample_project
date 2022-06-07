@@ -31,7 +31,7 @@ class RacePage extends StatelessWidget {
                     return _TappButton(
                       angle: pi,
                       status: state.status,
-                      onTap: () => context.read<TeamCounterRepository>().incrementCounter(isFirstPlayer: false),
+                      onTap: () => context.read<TeamCounterBloc>().add(IncrementScoreEvent(isFirstPlayer: false)),
                       color: Colors.red,
                       score: context.select<TeamCounterRepository, int>((value) => value.secondPlayerScore),
                       teamName: 'Red Team',
@@ -50,7 +50,7 @@ class RacePage extends StatelessWidget {
                   builder: (context, state) {
                     if (state is TeamCounterFinishState) {
                       return _RestartButton(
-                        onTap: () => context.read<TeamCounterRepository>().restart(),
+                        onTap: () => context.read<TeamCounterBloc>().add(RestartGameEvent()),
                       );
                     }
                     return _ScoreBoard(
@@ -64,7 +64,7 @@ class RacePage extends StatelessWidget {
                   builder: (context, state) {
                     return _TappButton(
                       status: state.status,
-                      onTap: () => context.read<TeamCounterRepository>().incrementCounter(isFirstPlayer: true),
+                      onTap: () => context.read<TeamCounterBloc>().add(IncrementScoreEvent(isFirstPlayer: true)),
                       color: Colors.blue,
                       score: context.select<TeamCounterRepository, int>((value) => value.firstPlayerScore),
                       teamName: 'Blue Team',
